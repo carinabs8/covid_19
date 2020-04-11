@@ -7,13 +7,13 @@
     "folds" : "31|56|53|0|\n",
     "hash" : "0",
     "id" : "BA4C6D7D",
-    "lastKnownWriteTime" : 1586574559,
-    "last_content_update" : 1586574564198,
+    "lastKnownWriteTime" : 1586575689,
+    "last_content_update" : 1586575689470,
     "path" : "~/covid_19/appSourceFiles/plotFunctions.R",
     "project_path" : "appSourceFiles/plotFunctions.R",
     "properties" : {
-        "cursorPosition" : "55,29",
-        "scrollLine" : "26"
+        "cursorPosition" : "6,0",
+        "scrollLine" : "0"
     },
     "read_only" : false,
     "read_only_alternatives" : [
