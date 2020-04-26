@@ -12,11 +12,14 @@ function(input, output) {
   
   output$info <- renderText({
       paste0("Numero de Caosos=", input$plotHover$x , "\nNumero de mortes=", input$plotHover$y)
-      #paste0("Casos:", round(e$x, 1), " Mortes=", round(e$y, 1), "\n")
   })
   
   output$acumulativo_de_casos_confirmados <- renderPlot({
     plotAcumuloDeCasosConfirmados(covid_19)
+  })
+  
+  output$casos_novos_por_obitos_nivel_nacional <- renderPlot({
+    plotNovosCasosVerusNovosObitos(covid_19_nacional)
   })
   
 }

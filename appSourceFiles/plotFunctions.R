@@ -1,7 +1,8 @@
 resgatarArquivo <- function(url){
   filename = trimws(paste("./data/COVID-19-geographic-disbtribution-worldwide",
                           format(Sys.time(), "%Y-%m-%d"), ".xlsx", sep = ""))
-  GET(url, authenticate(":", ":", type="ntlm"), write_disk(filename, overwrite = TRUE), progress())
+  GET(url, authenticate(":", ":", type="ntlm"), write_disk(filename, overwrite = TRUE),
+      progress())
   return(filename)
 }
 
@@ -23,7 +24,7 @@ plotCasosDeCoronaPorPais <- function(data, paises=NULL){
       filter(countriesAndTerritories %in% paises)
   
   ggplot(arrange(covid_19_de_maiores_casos_por_pais, desc(mes_ano)),
-         aes(x=mes_ano, y=cases, group = 1)) +
+         aes(x=mes_ano, y=cases, group = 1, tooltip=cases )) +
     geom_col() +
     facet_wrap(vars(countriesAndTerritories)) +
     labs(title = "Países com maiores casos de COVID-19", x="Data", y="Casos")
@@ -57,9 +58,15 @@ plotAcumuloDeCasosConfirmados <- function(dados){
   dados <- dados  %>%
     group_by(countriesAndTerritories,dia) %>%
     summarise(numero_de_casos = sum(cases))%>%
-    filter(numero_de_casos >1000 )
+    filter(numero_de_casos > 1000 )
   ggplot(dados, aes(x=dia, y=numero_de_casos, color=countriesAndTerritories)) + 
     geom_line() +
-    geom_text(aes(angle = 45, label=countriesAndTerritories), check_overlap = T, hjust=0, nudge_x=0.5, nudge_y=0.5)
+    geom_text(aes(angle = 45, label=countriesAndTerritories),
+      check_overlap = T)
 }
-  
+
+plotNovosCasosVerusNovosObitos <- function(data){
+  ggplot(data, aes(casosNovos, obitosNovos, colour= regiao) ) + geom_point() +
+    labs(title = "Números de casos versus número de óbitos", x="Número de Casos Novos", y="Número de obitos novos")
+}
+
