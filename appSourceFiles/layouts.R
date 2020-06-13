@@ -23,12 +23,7 @@ tabPanelNivelMundial <- function (){
     )
   )
 }
-
 tabPanelNivelNacional <- function(){
-  covid_19_nacional <- read_delim("data/covid_19_nacional20200415.csv", 
-    ";", escape_double = FALSE, 
-    col_types = cols(data = col_date(format = "%Y-%m-%d")), 
-    trim_ws = TRUE)
   fluidPage(
     fluidRow(
       column(
@@ -37,3 +32,4 @@ tabPanelNivelNacional <- function(){
     )
   )
 }
+

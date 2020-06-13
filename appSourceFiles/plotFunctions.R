@@ -5,6 +5,14 @@ resgatarArquivo <- function(url){
       progress())
   return(filename)
 }
+library(readxl)
+filename <- resgatarArquivo("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide.xlsx")
+
+covid_19 <- read_excel(filename) %>% mutate(dia = as.Date(paste(year, month, day, sep = "-")))
+covid_19_nacional <- read_excel("./data/covid_19_nacional20200415.XLSX", 
+                                                             col_types = c("text", "text", "text", 
+                                                                                 "text", "numeric", "numeric", "text",
+                                                                                 "date", "numeric", "numeric", "numeric","numeric", "numeric", "numeric"))
 
 plotCasosDeCoronaPorPais <- function(data, paises=NULL){
   covid_19_de_maiores_casos_por_pais <- data %>%
@@ -66,7 +74,10 @@ plotAcumuloDeCasosConfirmados <- function(dados){
 }
 
 plotNovosCasosVerusNovosObitos <- function(data){
-  ggplot(data, aes(casosNovos, obitosNovos, colour= regiao) ) + geom_point() +
+  ggplot(data, aes(casosAcumulado, obitosAcumulado, colour= regiao) ) + geom_point() +
     labs(title = "Números de casos versus número de óbitos", x="Número de Casos Novos", y="Número de obitos novos")
 }
 
+plotHistogramaDosCasosNivelNacional <- function(data){
+  hist(data$casosAcumulados)
+}

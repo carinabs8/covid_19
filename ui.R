@@ -4,6 +4,8 @@ library(httr)
 require(dplyr)
 library(ggplot2)
 library(readr)
+library(dplyr)
+library(epiDisplay)
 
 source("appSourceFiles/plotFunctions.R") # source plotting functions
 source("appSourceFiles/layouts.R")

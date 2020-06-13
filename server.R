@@ -22,5 +22,12 @@ function(input, output) {
     plotNovosCasosVerusNovosObitos(covid_19_nacional)
   })
   
+  output$histograma_dos_casos_nivel_nacional <- renderPlot({
+    plotHistogramaDosCasosNivelNacional(covid_19_nacional)
+  })
+  
 }
+covid_19_niteroi <- covid_19_nacional %>% filter(estado == "RJ" & municipio == "Niterói")
+covid_19_niteroi <- covid_19_niteroi[order(covid_19_niteroi$data, decreasing=FALSE),] %>% mutate(obitosNovos = coalesce(obitosAcumulado - lag(obitosAcumulado)), 0)
 
+plot(covid_19_niteroi$data ,covid_19_niteroi$obitosNovos)
