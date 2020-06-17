@@ -6,6 +6,11 @@ function(input, output) {
   output$casos_de_corona_por_paises <- renderPlot({
     plotCasosDeCoronaPorPais(covid_19, input$pais)
   })
+  
+  output$casos_de_corona_por_1000000_habitantes <- renderPlot({
+    plotCasosDeCoronaPorPais_a_cada_1000m_habitantes(covid_19, input$pais)
+  })
+  
   output$mortes_por_corona_por_paises <- renderPlot({
     plotMortesCoronaPorPais(covid_19, input$pais)
   })
@@ -27,7 +32,4 @@ function(input, output) {
   })
   
 }
-covid_19_niteroi <- covid_19_nacional %>% filter(estado == "RJ" & municipio == "Niterói")
-covid_19_niteroi <- covid_19_niteroi[order(covid_19_niteroi$data, decreasing=FALSE),] %>% mutate(obitosNovos = coalesce(obitosAcumulado - lag(obitosAcumulado)), 0)
 
-plot(covid_19_niteroi$data ,covid_19_niteroi$obitosNovos)

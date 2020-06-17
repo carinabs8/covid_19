@@ -8,22 +8,21 @@ library(lubridate)
 library(stringr)
 library(ggplot2)
 
-COVID <- read_delim("covid_19/data/painel_covid19_erj_ses/COVID30052020.csv", 
+#http://painel.saude.rj.gov.br/monitoramento/covid19.html
+COVID <- read_delim("./data/painel_covid19_erj_ses/COVID11072020.csv", 
                         ";", escape_double = FALSE, col_types = cols(dias = col_integer(), 
                         dt_coleta_dt_notif = col_date(format = "%d/%m/%Y"), 
                         dt_obito = col_date(format = "%d/%m/%Y"), dt_sintoma = col_date(format = "%d/%m/%Y"), 
                         idade = col_integer(), sexo = col_factor(levels = c("F", "M"))), trim_ws = TRUE)
-SIVEP <- read_delim("covid_19/data/painel_covid19_erj_ses/SIVEP30052020.csv", 
+SIVEP <- read_delim("./data/painel_covid19_erj_ses/SIVEP28062020.csv", 
                             ";", escape_double = FALSE, col_types = cols(CS_SEXO = col_factor(levels = c("M", 
                                                                                                          "F")), DT_NASC = col_date(format = "%d/%m/%Y"), 
                                                                          NU_IDADE_N = col_integer()), trim_ws = TRUE)
-mortes_por_doencas_respiratorias_em_2019 <- read_delim("covid_19/data/painel_covid19_erj_ses/mortes_por_doencas_respiratorias_em_2019.csv", 
-                                                       ";", escape_double = FALSE, col_types = cols(`ano (uid)` = col_integer(), 
-                                                                                                    `categoria (uid)` = col_integer()), 
-                                                       trim_ws = TRUE)
+mortes_por_doencas_respiratorias_em_2019 <- read_delim("./data/painel_covid19_erj_ses/mortes_por_doencas_respiratorias_em_2019.csv", 
+  ";", escape_double = FALSE, col_types = cols(`ano (uid)` = col_integer(), `categoria (uid)` = col_integer()), trim_ws = TRUE)
 
 #https://www.ibge.gov.br/explica/codigos-dos-municipios.php#:~:text=C%C3%B3digos%20dos%20munic%C3%ADpios%20IBGE,c%C3%B3digo%20da%20Unidade%20da%20Federa%C3%A7%C3%A3o.
-municipios <- read_excel("covid_19/data/painel_covid19_erj_ses/RELATORIO_DTB_BRASIL_MUNICIPIO.xls")
+municipios <- read_excel("./data/painel_covid19_erj_ses/RELATORIO_DTB_BRASIL_MUNICIPIO.xls")
 municipios <- municipios %>% mutate(codigo_completo_municipio = as.integer(str_extract(`Código Município Completo`, "\\d{6}")))
 
 mortes_por_doencas_respiratorias_em_2019 <- mortes_por_doencas_respiratorias_em_2019 %>%
@@ -49,11 +48,15 @@ doencas_respiratorias <- mortes_por_doencas_respiratorias_em_2019 %>%
   filter(format(competencia, "%m") <= format(Sys.Date(), "%m"))
 
 casos_covid_em_sg <- COVID%>% filter(str_detect(municipio_res, regex(stringi::stri_trans_general(sao_goncalo$Nome_Município[1:1],"Latin-ASCII"), ignore_case = TRUE)))
-View(casos_covid_em_sg)
+
+
+
 casos_covid_em_sg_mensal <- casos_covid_em_sg %>% filter(!is.na(dt_sintoma)) %>%
   mutate(competencia = format(dt_sintoma, "1/%m/%Y")) %>%
   group_by(competencia) %>%
   summarise(casos = n())
+
+shapiro.test(casos_covid_em_sg_mensal$casos)
 
 plot_res_1 <- ggplot(doencas_respiratorias, aes(as.Date(competencia, "%d/%m/%Y"), casos)) +
   geom_line(na.rm=TRUE) + 
@@ -135,3 +138,118 @@ plot(dados_com_idade$idade ~ dados_com_idade$dias)
 dados_com_idade[,c("idade", "dias")]
 par(mfrow=c(2,2))
 qqnorm(COVID$idade)
+#=================
+
+municipios <- read_excel("./data/municipios.xls", sheet = "Municípios")
+COVID <- COVID %>% mutate(municipio_nome = toupper(stringi::stri_trans_general(municipio_res,"Latin-ASCII")))
+municipios <- municipios %>% mutate( municipio_nome = toupper(stringi::stri_trans_general(`NOME DO MUNICÍPIO`, "Latin-ASCII")))%>%
+  rename(populacao_estimada = `POPULAÇÃO ESTIMADA`) %>% filter(municipios$UF == "RJ")
+COVID <- COVID %>% right_join(municipios, by= "municipio_nome") %>% mutate(com_obito = !is.na(dt_obito))
+
+covid <- COVID %>% group_by(municipio_res, classificacao, populacao_estimada) %>% 
+  summarise( casos = n(), qtd_obitos = sum(!is.na(dt_obito))) %>%
+  mutate(porcentagem_de_casos = (casos*100/as.integer(populacao_estimada)),
+         porcentagem_de_obitos = (qtd_obitos * 100/as.integer(casos)))
+
+#covid_ggplot_ <- reshape2::melt(head(covid, n=20), id.vars = "municipio_res",  measure.vars = c("casos", "porcentagem"))
+plot_res_1 <- ggplot(head(covid[order(-covid$casos),], n=20), aes( x=casos, y=municipio_res)) +
+  geom_col()
+plot_res_2 <- ggplot(head(covid[order(-covid$porcentagem_de_casos),], n=20), aes( x=porcentagem_de_casos, y=municipio_res)) +
+  geom_col()
+cowplot::plot_grid(plot_res_1, plot_res_2, ncol=2)
+
+density(COVID$com_obito)
+covid_ggplot_ <- reshape2::melt(head(covid, n=20), id.vars = "municipio_res",  measure.vars = c("porcentagem_de_casos", "porcentagem_de_obitos"))
+ggplot(covid_ggplot_, aes( x=value, y= municipio_res)) +
+  scale_fill_discrete(name="Porcentagem", breaks=c("porcentagem_de_casos", "porcentagem_de_obitos"),
+                      labels=c("Casos", "Óbitos")) +
+  geom_col(aes(fill = variable)) + 
+  theme(legend.position = "top")
+
+covid_rj <- COVID %>% filter(dt_evento != "NULL")  %>%
+  mutate(competencia = as.Date(format(as.Date(dt_evento, "%d/%m/%Y"), "01/%m/%Y")), "%d/%m/%Y") %>% group_by(competencia) %>% summarise(qtd_casos = n(), qtd_obitos = sum(com_obito == TRUE) )
+grafico <- ggplot(covid_rj, aes(competencia, qtd_casos)) +
+  geom_line(na.rm=TRUE)
+shapiro.test(covid_rj$qtd_obitos)
+model_fit <- lm(qtd_casos ~ qtd_obitos, data=covid_rj)
+istPred <- predict(model_fit, testData) 
+covid_rj + geom_line(aes(model_fit))
+covid_rj$dt_evento
+format(as.Date(covid_rj$dt_evento, "%d/%m/%Y"), "01/%d/%Y")
+#=========================
+covid_proporcao_por_cidade <- COVID %>% filter(!is.na(sexo)) %>%
+  count(municipio_res, sexo) %>% mutate(proporcao = prop.table(n))
+
+procentagem_de_obitos_por_casos <- COVID %>% group_by(municipio_res) %>% 
+  summarise( casos = n(), qtd_obitos = sum(com_obito == TRUE)) %>%
+  mutate(porcentagem_de_casos = (casos*100/as.integer(casos)),
+         porcentagem_de_obitos = (qtd_obitos * 100/as.integer(casos)))
+#write.csv(procentagem_de_obitos_por_casos, "./data/painel_covid19_erj_ses/proporcao_de_obitos_sobre_casos.csv")
+boxplot(procentagem_de_obitos_por_casos$porcentagem_de_obitos, main ="Boxplot Porcentagem de Obitos")
+shapiro.qqnorm(procentagem_de_obitos_por_casos$porcentagem_de_obitos)
+shapiro.test(procentagem_de_obitos_por_casos$porcentagem_de_obitos)
+boxcox(procentagem_de_obitos_por_casos ~ porcentagem_de_obitos)
+help("boxcox")
+
+covid_por_cidade <- COVID %>% filter(!is.na(sexo)) %>%
+  group_by(municipio_res, sexo) %>%
+  summarise(qtd_casos = n(), qtd_obitos = sum(com_obito == TRUE), qtd_casos_log = log10(n()))
+
+covid <- COVID %>% filter(!is.na(idade)) %>% group_by(idade) %>% 
+  summarise( casos = n(), qtd_obitos = sum(!is.na(dt_obito)))
+covid_kms <- covid %>%  select(c(idade, casos, qtd_obitos))
+covidBest <- FitKMeans(covid_kms, max.clusters=20, nstart=1, seed=0)
+PlotHartigan(covidBest)
+covid_kms_ <- kmeans(x= na.omit(covid_kms) , centers = 11, nstart = 1)
+plot(covid_kms_, data = data.frame(covid_kms))
+covid_kms_centroids <- as.data.frame(covid_kms_[["centers"]]) %>%
+  arrange(idade, casos, qtd_obitos)
+
+ggplot(covid_kms_centroids, aes( x=idade, y= casos, colour =  rownames(covid_kms_centroids))) +
+  scale_fill_discrete(name="caoso", breaks=c("Media de idade", "media de casos"),
+                      labels=c("idade", "casos")) +
+  geom_col(aes(fill = rownames(covid_kms_centroids))) + 
+  geom_point(aes(y=qtd_obitos))+
+  theme(legend.position = "top")
+
+
+ggplot(covid_kms_centroids, aes( x=idade, y= casos), colour = rownames(covid_kms_centroids)) +
+  scale_fill_discrete(labels=c("idade", "casos/mortes")) +
+  geom_area(mapping = aes(y = casos), fill = "gray") +
+  geom_line(mapping = aes(y = qtd_obitos))+
+  theme(legend.position = "top")
+
+
+centroids <- kmeans(x=covid_por_cidade[,c(4,5)], centers=6, nstart = 1)
+
+
+#========================
+skewness(x$qtd_obitos, na.rm = TRUE)
+library(moments)
+
+help(transform)
+require(MASS)
+head(procentagem_de_obitos_por_casos)
+boxcox(porcentagem_de_obitos, data = procentagem_de_obitos_por_casos)
+boxcox(resp ~ trat, data=tr, lam=seq(-1, 1, 1/10))
+set.seed(0)
+
+library(useful)
+centroids <- kmeans(x=covid_por_cidade[,c(3,5)], centers=6, nstart = 1)
+centroids
+cor(covid_por_cidade$qtd_casos_log, covid_por_cidade$qtd_obitos)
+covid_por_cidade_ <- covid_por_cidade %>% ungroup(municipio_res) %>% select(c(qtd_casos, qtd_casos_log))
+covid_por_cidade
+covid_por_cidade$qtd_casos_log
+linearMod <- lm(qtd_casos_log ~ qtd_obitos, data=covid_por_cidade) 
+summary(linearMod)
+help(select)
+covid_por_cidade_$qtd_casos_log
+plot(centroids, data=covid_por_cidade_)
+best <- FitKMeans(covid_por_cidade[,c(3,5)], max.clusters=20, nstart=1, seed=1)
+best
+help(FitKMeans)
+PlotHartigan(best)
+
+t_ <- hclust(d=dist(covid_por_cidade)) 
+plot(t_)

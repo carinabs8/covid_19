@@ -1,11 +1,14 @@
 library(shinythemes)
 library(readxl)
 library(httr)
-require(dplyr)
+library(dplyr)
 library(ggplot2)
 library(readr)
 library(dplyr)
 library(epiDisplay)
+library(readxl)
+library(wbstats)
+library(tidyverse)
 
 source("appSourceFiles/plotFunctions.R") # source plotting functions
 source("appSourceFiles/layouts.R")
