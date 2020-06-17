@@ -35,9 +35,9 @@ plotCasosDeCoronaPorPais <- function(data, paises=NULL){
   ggplot(covid_19_de_maiores_casos_por_pais,
     aes(x=mes_ano, y=cases, group = 1, tooltip=cases )) +
     geom_col() +
-    geom_text(aes(angle = 4, label=ifelse(cases > median(cases), cases, "")), check_overlap = T, color="blue") +
+    #geom_text(aes(angle = 4, label=ifelse(cases > median(cases), cases, "")), check_overlap = T, color="blue") +
     facet_wrap(vars(countriesAndTerritories), scales = "free") +
-    labs(title = "Países com maiores casos de COVID-19", x="Data", y="Casos")
+    labs(title = "Países com maiores números de casos de COVID-19", x="Data", y="Casos")
 }
 
 plotCasosDeCoronaPorPais_a_cada_1000m_habitantes <- function(data, paises=NULL){
@@ -58,7 +58,7 @@ plotCasosDeCoronaPorPais_a_cada_1000m_habitantes <- function(data, paises=NULL){
     geom_col() +
     #geom_text(aes(angle = 4, label=ifelse(cases > median(cases), cases, "")), check_overlap = T, color="blue") +
     facet_wrap(vars(countriesAndTerritories), scales = "free") +
-    labs(title = "Países com maiores casos de COVID-19 por 100.000 habitantes", x="Data", y="Casos")
+    labs(title = "Países com maiores números de casos de COVID-19 por 100.000 habitantes", x="Data", y="Casos")
 }
 
 paisesComMaioresCasos <- function(data){
@@ -99,7 +99,7 @@ plotMortesCoronaPorPais <- function(dados, paises=NULL){
               show.legend = FALSE) +
     scale_color_manual(values = rainbow(3)) + 
     facet_wrap( ~ countriesAndTerritories, scales = "free") +
-    labs(title = "Países com maiores mortes de COVID-19 sobre casos e sobre a populacao ", x="Data", y="Mortes sobre casos vs sobre populacao")
+    labs(title = "Países com maiores números de mortes de COVID-19 sobre casos e sobre a populacao ", x="Data", y="Mortes sobre casos vs sobre populacao")
 }
 
 plotAcumuloDeCasosConfirmados <- function(dados){
@@ -113,7 +113,7 @@ plotAcumuloDeCasosConfirmados <- function(dados){
     geom_line() +
     geom_text(aes(angle = 45, label=countriesAndTerritories),
       check_overlap = T) +
-    labs(title = "Progressão dos casos por COVID-19", x="Mes", y="Numero de casos")
+    labs(title = "Progressão dos núreros de casos por COVID-19", x="Mes", y="Numero de casos")
 }
 
 plotNovosCasosVerusNovosObitos <- function(data){

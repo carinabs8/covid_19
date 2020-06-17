@@ -9,20 +9,18 @@ library(stringr)
 library(ggplot2)
 
 #http://painel.saude.rj.gov.br/monitoramento/covid19.html
-COVID <- read_delim("data/painel_covid19_erj_ses/COVID15072020.csv", ";", escape_double = FALSE,
-                    col_types = cols(dt_coleta_dt_notif = col_datetime(format = "%Y/%m/%d %H:%M:%S"), 
-                    dt_evento = col_datetime(format = "%Y/%m/%d %H:%M:%S"), 
-                    dt_sintoma = col_datetime(format = "%Y/%m/%d %H:%M:%S"),
-                    dt_obito = col_datetime(format = "%Y/%m/%d %H:%M:%S"),
-                    sexo = col_factor(levels = c("M","F"))), trim_ws = TRUE)
+COVID <- read_delim("data/painel_covid19_erj_ses/COVID10082020.csv",
+                        ";", escape_double = FALSE, col_types = cols(dias = col_integer(), 
+                        dt_coleta_dt_notif = col_date(format = "%d/%m/%Y"), 
+                        dt_obito = col_date(format = "%d/%m/%Y"), dt_sintoma = col_date(format = "%d/%m/%Y"), 
+                        idade = col_integer(), sexo = col_factor(levels = c("F", "M"))), trim_ws = TRUE)
 
-municipios <- read_excel("./data/municipios.xls", sheet = "Municípios")
 COVID <- COVID %>% mutate(municipio_nome = toupper(stringi::stri_trans_general(municipio_res,"Latin-ASCII")))
 municipios <- municipios %>% mutate( municipio_nome = toupper(stringi::stri_trans_general(`NOME DO MUNICÍPIO`, "Latin-ASCII")))%>%
   rename(populacao_estimada = `POPULAÇÃO ESTIMADA`) %>% filter(municipios$UF == "RJ")
 COVID <- COVID %>% right_join(municipios, by= "municipio_nome") %>% mutate(com_obito = !is.na(dt_obito))
 
-SIVEP <- read_delim("./data/painel_covid19_erj_ses/SIVEP28062020.csv", 
+SIVEP <- read_delim("./data/painel_covid19_erj_ses/SIVEP28062020.csv",
                             ";", escape_double = FALSE, col_types = cols(CS_SEXO = col_factor(levels = c("M", 
                                                                                                          "F")), DT_NASC = col_date(format = "%d/%m/%Y"), 
                                                                          NU_IDADE_N = col_integer()), trim_ws = TRUE)
